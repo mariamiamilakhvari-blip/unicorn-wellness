@@ -17,7 +17,7 @@ type Question = {
 const QUESTIONS: Question[] = [
   { id: 'genderIdentity', question: 'How do you identify?', subtitle: 'This helps us personalise your well-being experience', type: 'single', options: [{ label: 'Female' }, { label: 'Male' }] },
   { id: 'ageCohort', question: 'What is your age group?', type: 'single', options: [{ label: '18–24' }, { label: '25–34' }, { label: '35–44' }, { label: '45–54' }, { label: '55+' }] },
-  { id: 'occupation', question: 'What is your occupation?', subtitle: 'Select an option from the dropdown list below', type: 'select', options: [
+  { id: 'occupation', question: 'What is your occupation?', type: 'select', options: [
     { label: 'Student' },
     { label: 'Healthcare & Medical' },
     { label: 'Technology & Engineering' },
@@ -167,7 +167,7 @@ export default function QuestionsPage() {
             onChange={e => setAnswers(a => ({ ...a, [q.id]: e.target.value }))}
             className="w-full h-12 px-4 rounded-xl border border-sky-200 bg-white text-sm font-medium text-gray-900 focus:outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-400/20 transition-all appearance-none cursor-pointer"
           >
-            <option value="" disabled>Select an occupation…</option>
+            <option value="" disabled>Select an option from the dropdown menu list of the occupations below</option>
             {q.options?.map(opt => (
               <option key={opt.label} value={opt.label}>{opt.label}</option>
             ))}
