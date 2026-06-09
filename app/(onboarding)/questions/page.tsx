@@ -11,24 +11,43 @@ type Question = {
   question: string
   subtitle?: string
   type: 'single' | 'multi' | 'text'
-  options?: { label: string; emoji: string }[]
+  options?: { label: string; emoji?: string }[]
 }
 
 const QUESTIONS: Question[] = [
-  { id: 'genderIdentity', question: 'How do you identify?', subtitle: 'This helps us personalise your well-being experience', type: 'single', options: [{ label: 'Female', emoji: '♀️' }, { label: 'Male', emoji: '♂️' }] },
-  { id: 'ageCohort', question: 'What is your age group?', subtitle: 'We calibrate recommendations by life stage', type: 'single', options: [{ label: 'Under 18', emoji: '🌱' }, { label: '18–24', emoji: '⚡' }, { label: '25–34', emoji: '🚀' }, { label: '35–44', emoji: '🌟' }, { label: '45–54', emoji: '🎯' }, { label: '55+', emoji: '🌿' }] },
-  { id: 'nationality', question: 'Where are you from?', type: 'text' },
-  { id: 'maritalStatus', question: 'What is your relationship status?', type: 'single', options: [{ label: 'Single', emoji: '🦋' }, { label: 'In a relationship', emoji: '💛' }, { label: 'Engaged', emoji: '💍' }, { label: 'Married', emoji: '💑' }, { label: 'Divorced', emoji: '🌿' }] },
-  { id: 'relaxationTriggers', question: 'What helps you relax?', subtitle: 'Select all that apply', type: 'multi', options: [{ label: 'Music', emoji: '🎵' }, { label: 'Walking', emoji: '🚶' }, { label: 'Talking to someone', emoji: '💬' }, { label: 'Exercise', emoji: '🏋️' }, { label: 'Quiet time', emoji: '🤫' }] },
-  { id: 'fatigueState', question: 'How do you usually feel after work?', subtitle: 'Your typical end-of-day state', type: 'single', options: [{ label: 'Energized', emoji: '⚡' }, { label: 'Tired', emoji: '😴' }, { label: 'Stressed', emoji: '😤' }, { label: 'Calm', emoji: '😌' }, { label: 'Unmotivated', emoji: '😶' }] },
-  { id: 'microDesire', question: 'What do you most want to do right now?', type: 'single', options: [{ label: 'Fitness', emoji: '🏃' }, { label: 'Creativity', emoji: '🎨' }, { label: 'Socializing', emoji: '🫂' }, { label: 'Learning', emoji: '📚' }, { label: 'Resting', emoji: '🛋️' }] },
-  { id: 'environmentalComfort', question: 'Where do you feel most at home?', type: 'single', options: [{ label: 'Nature', emoji: '🌲' }, { label: 'City', emoji: '🏙️' }, { label: 'Home', emoji: '🏡' }, { label: 'Gym', emoji: '🏋️' }, { label: 'Café', emoji: '☕' }] },
-  { id: 'primaryMotivators', question: 'What motivates you most?', subtitle: 'Select all that apply', type: 'multi', options: [{ label: 'Achievement', emoji: '🏆' }, { label: 'Health', emoji: '💪' }, { label: 'Money', emoji: '💰' }, { label: 'Relationships', emoji: '❤️' }, { label: 'Personal growth', emoji: '🌱' }] },
-  { id: 'stressCoping', question: 'How do you cope with stress?', subtitle: 'Select all that apply', type: 'multi', options: [{ label: 'Movement / Exercise', emoji: '🏃' }, { label: 'Music', emoji: '🎵' }, { label: 'Sleep', emoji: '💤' }, { label: 'Food / Drinks', emoji: '🍵' }, { label: 'Talking to others', emoji: '💬' }] },
-  { id: 'contentFilters', question: 'What content interests you?', subtitle: 'Select all that apply', type: 'multi', options: [{ label: 'Well-being', emoji: '🧘' }, { label: 'Fashion', emoji: '👗' }, { label: 'Sports', emoji: '⚽' }, { label: 'Technology', emoji: '💻' }, { label: 'Business', emoji: '💼' }] },
-  { id: 'focalPriority', question: 'What is your core focus right now?', type: 'single', options: [{ label: 'Career', emoji: '💼' }, { label: 'Fitness', emoji: '💪' }, { label: 'Emotional balance', emoji: '⚖️' }, { label: 'Relationships', emoji: '❤️' }, { label: 'Self-confidence', emoji: '✨' }] },
-  { id: 'productivityWindows', question: 'When are you most productive?', subtitle: 'Select all that apply', type: 'multi', options: [{ label: 'Morning', emoji: '🌅' }, { label: 'Afternoon', emoji: '☀️' }, { label: 'Evening', emoji: '🌆' }, { label: 'Late night', emoji: '🌙' }] },
-  { id: 'targetIntervention', question: 'What do you most need right now?', subtitle: 'Your immediate intention sets the tone', type: 'single', options: [{ label: 'More energy', emoji: '⚡' }, { label: 'Better mood', emoji: '😊' }, { label: 'Better focus', emoji: '🎯' }, { label: 'Less stress', emoji: '🌊' }] },
+  { id: 'genderIdentity', question: 'How do you identify?', subtitle: 'This helps us personalise your well-being experience', type: 'single', options: [{ label: 'Female' }, { label: 'Male' }] },
+  { id: 'ageCohort', question: 'What is your age group?', subtitle: 'We calibrate recommendations by life stage', type: 'single', options: [{ label: 'Under 18' }, { label: '18–24' }, { label: '25–34' }, { label: '35–44' }, { label: '45–54' }, { label: '55+' }] },
+  { id: 'occupation', question: 'What is your occupation?', subtitle: 'Helps us tailor your experience', type: 'text' },
+  { id: 'energyEndOfDay', question: 'What does your energy feel like by end of day?', type: 'single', options: [
+    { label: "I'm usually drained and need to decompress" },
+    { label: "I'm restless and need to wind down actively" },
+    { label: "I fluctuate: some days high, some days flat" },
+    { label: "I'm fine but running on autopilot" },
+  ]},
+  { id: 'neglectedArea', question: 'Which area of your life feels most neglected right now?', type: 'single', options: [
+    { label: 'My relationships and social life' },
+    { label: 'My health and physical energy' },
+    { label: 'My personal growth and creativity' },
+    { label: 'My inner calm and sense of purpose' },
+  ]},
+  { id: 'preferExperience', question: 'How do you prefer to experience?', type: 'single', options: [
+    { label: 'Making something with my hands' },
+    { label: 'Learning and expanding my knowledge' },
+    { label: 'Movement and physical challenge' },
+    { label: 'Experiences and meeting new people' },
+  ]},
+  { id: 'nudgeType', question: 'What kind of nudge actually moves you?', type: 'single', options: [
+    { label: 'A quiet reminder' },
+    { label: 'A specific small action I can do in 5 minutes' },
+    { label: 'Challenge me to do something uncomfortable' },
+    { label: 'Push me gently out of my comfort zone' },
+  ]},
+  { id: 'betterLife', question: 'What would a better version of your life feel like?', type: 'single', options: [
+    { label: 'More present with the people I love' },
+    { label: 'More energized and physically alive' },
+    { label: 'More creative and mentally stimulated' },
+    { label: 'More at peace with where I am right now' },
+  ]},
 ]
 
 export default function QuestionsPage() {
