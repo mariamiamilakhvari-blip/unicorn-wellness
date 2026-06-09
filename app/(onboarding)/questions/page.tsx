@@ -55,7 +55,7 @@ const QUESTIONS: Question[] = [
     { label: 'My personal growth and creativity' },
     { label: 'My inner calm and sense of purpose' },
   ]},
-  { id: 'preferExperience', question: 'How do you prefer to experience?', type: 'single', options: [
+  { id: 'preferExperience', question: 'What do you prefer to experience?', type: 'single', options: [
     { label: 'Making something with my hands' },
     { label: 'Learning and expanding my knowledge' },
     { label: 'Movement and physical challenge' },
