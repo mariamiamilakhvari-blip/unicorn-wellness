@@ -151,23 +151,23 @@ export default function LandingPage() {
             </div>
           </div>
 
-          <div className="max-w-sm">
-            <div className="bg-velvet-600 rounded-2xl p-8 text-white relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-40 h-40 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/4" />
-              <div className="text-sm font-semibold text-ochre-200 mb-2">{t('pricingPremium')}</div>
+          <div className="max-w-lg">
+            <div className="bg-velvet-700 rounded-2xl p-10 text-white relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-56 h-56 bg-velvet-600 rounded-full -translate-y-1/3 translate-x-1/4" />
+              <div className="text-sm font-bold text-white mb-3">{t('pricingPremium')}</div>
               <div className="flex items-baseline gap-1 mb-1">
                 <span className="text-5xl font-black">{plan === 'yearly' ? '$149' : '$14.99'}</span>
-                <span className="text-ochre-200 text-sm">/ {plan === 'yearly' ? t('pricingPerYear') : t('pricingPerMonth')}</span>
+                <span className="text-white/70 text-sm">/ {plan === 'yearly' ? t('pricingPerYear') : t('pricingPerMonth')}</span>
               </div>
-              <div className="text-ochre-200 text-sm mb-8">After your 21-day free trial · {t('pricingCancelAnytime')}</div>
-              <ul className="space-y-3 mb-8">
+              <div className="text-sky-300 text-sm mb-8">After your 21-day free trial · {t('pricingCancelAnytime')}</div>
+              <ul className="space-y-3 mb-10">
                 {PREMIUM_FEATURES.map(f => (
                   <li key={f} className="flex items-center gap-3 text-sm text-white">
-                    <CheckCircle2 className="h-4 w-4 text-ochre-300 shrink-0" />{f}
+                    <CheckCircle2 className="h-4 w-4 text-sky-300 shrink-0" />{f}
                   </li>
                 ))}
               </ul>
-              <Link href="/signup" className="block w-full text-center py-3 rounded-full bg-white/10 border border-white/20 text-white font-bold hover:bg-white/20 transition-colors">
+              <Link href="/signup" className="block w-full text-center py-3.5 rounded-full bg-white text-black font-bold hover:bg-gray-100 transition-colors">
                 {t('pricingPremiumBtn')}
               </Link>
             </div>
