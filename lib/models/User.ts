@@ -35,12 +35,14 @@ export interface IUser extends Document {
     targetIntervention?: string
   }
   subscription: {
-    plan: 'free_trial' | 'monthly' | 'yearly' | 'none'
+    plan: 'free_trial' | 'monthly' | 'yearly' | 'premium' | 'none'
     status: 'active' | 'cancelled' | 'expired'
     trialEndsAt?: Date
     currentPeriodEnd?: Date
     stripeCustomerId?: string
     stripeSubscriptionId?: string
+    dodoCustomerId?: string
+    dodoSubscriptionId?: string
   }
   wellbeingPlan?: {
     hobby: {
@@ -103,12 +105,14 @@ const UserSchema = new Schema<IUser>({
     targetIntervention: String,
   },
   subscription: {
-    plan: { type: String, enum: ['free_trial', 'monthly', 'yearly', 'none'], default: 'free_trial' },
+    plan: { type: String, enum: ['free_trial', 'monthly', 'yearly', 'premium', 'none'], default: 'free_trial' },
     status: { type: String, enum: ['active', 'cancelled', 'expired'], default: 'active' },
     trialEndsAt: Date,
     currentPeriodEnd: Date,
     stripeCustomerId: String,
     stripeSubscriptionId: String,
+    dodoCustomerId: String,
+    dodoSubscriptionId: String,
   },
   wellbeingPlan: {
     hobby: {

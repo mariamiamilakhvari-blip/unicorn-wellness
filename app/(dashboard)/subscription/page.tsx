@@ -23,12 +23,21 @@ export default function SubscriptionPage() {
     { icon: '🫂', text: t('subPremiumFeature8') },
   ]
 
-  function subscribe() {
+  async function subscribe() {
     setLoading(true)
-    setTimeout(() => {
+    try {
+      const res = await fetch('/api/dodo/checkout', { method: 'POST' })
+      const data = await res.json()
+      if (data.url) {
+        window.location.href = data.url
+      } else {
+        alert('Failed to start checkout. Please try again.')
+        setLoading(false)
+      }
+    } catch {
+      alert('Failed to start checkout. Please try again.')
       setLoading(false)
-      alert('Stripe checkout will be connected in Phase 2. Your plan: ' + plan)
-    }, 800)
+    }
   }
 
   return (

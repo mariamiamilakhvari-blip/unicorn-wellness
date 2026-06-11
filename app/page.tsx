@@ -10,6 +10,19 @@ export default function LandingPage() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [plan, setPlan] = useState<'monthly' | 'yearly'>('yearly')
   const [dark, setDark] = useState(false)
+  const [subscribing, setSubscribing] = useState(false)
+
+  async function handleSubscribe() {
+    setSubscribing(true)
+    try {
+      const res = await fetch('/api/dodo/checkout', { method: 'POST' })
+      if (res.status === 401) { window.location.href = '/login'; return }
+      const data = await res.json()
+      if (data.url) window.location.href = data.url
+    } finally {
+      setSubscribing(false)
+    }
+  }
 
   const STEPS = [
     { num: t('step1Num'), title: t('step1Title'), desc: t('step1Desc') },
@@ -161,6 +174,13 @@ export default function LandingPage() {
               <Link href="/signup" className="block w-full text-center py-3.5 rounded-full bg-white text-black font-bold hover:bg-gray-100 transition-colors">
                 {t('pricingPremiumBtn')}
               </Link>
+              <button
+                onClick={handleSubscribe}
+                disabled={subscribing}
+                className="mt-3 block w-full text-center py-3.5 rounded-full bg-velvet-500 border border-white/30 text-white font-bold hover:bg-velvet-400 transition-colors disabled:opacity-60"
+              >
+                {subscribing ? 'Loading…' : 'Buy Premium'}
+              </button>
             </div>
           </div>
         </div>
