@@ -1,15 +1,11 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import { ArrowRight, CheckCircle2, Menu, X, Moon, Sun } from 'lucide-react'
-import { useSession } from 'next-auth/react'
 import { useLanguage } from '@/lib/i18n/LanguageContext'
 import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 
 export default function LandingPage() {
-  const router = useRouter()
-  const { data: session } = useSession()
   const { t } = useLanguage()
   const [menuOpen, setMenuOpen] = useState(false)
   const [plan, setPlan] = useState<'monthly' | 'yearly'>('yearly')
@@ -27,11 +23,6 @@ export default function LandingPage() {
     t('pricingPremiumFeature3'),
   ]
 
-  useEffect(() => {
-    if (session?.user?.onboardingCompleted) {
-      router.replace('/home')
-    }
-  }, [session, router])
 
   return (
     <div className={`min-h-screen bg-white text-black${dark ? ' dark' : ''}`}>
