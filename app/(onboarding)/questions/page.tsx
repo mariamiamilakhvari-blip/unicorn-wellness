@@ -15,7 +15,7 @@ type Question = {
 }
 
 const QUESTIONS: Question[] = [
-  { id: 'genderIdentity', question: 'How do you identify?', subtitle: 'This helps us personalise your well-being experience', type: 'single', options: [{ label: 'Female' }, { label: 'Male' }] },
+  { id: 'genderIdentity', question: 'How do you identify?', subtitle: 'This helps us personalise your experience', type: 'single', options: [{ label: 'Female' }, { label: 'Male' }] },
   { id: 'ageCohort', question: 'What is your age group?', type: 'single', options: [{ label: '18–24' }, { label: '25–34' }, { label: '35–44' }, { label: '45–54' }, { label: '55+' }] },
   { id: 'occupation', question: 'What is your occupation?', type: 'select', options: [
     { label: 'Student' },
@@ -49,35 +49,22 @@ const QUESTIONS: Question[] = [
     { label: 'Married' },
     { label: 'Divorced / Separated' },
   ]},
-  { id: 'carThoughts', question: "When you're in the car alone, what do you think about most?", type: 'single', options: [
-    { label: "Work: I can't seem to leave it behind" },
-    { label: 'People: someone I should call, something I should say' },
-    { label: "Myself: who I'm becoming, what I actually want" },
-    { label: "Nothing: I'm not sure if that's peace or emptiness" },
+  { id: 'emotionalState', question: 'Where are you right now emotionally?', type: 'single', options: [
+    { label: 'Lost and confused' },
+    { label: 'Hurt or heartbroken' },
+    { label: 'Angry and frustrated' },
+    { label: 'Anxious and overthinking' },
   ]},
-  { id: 'neglectedArea', question: 'Which area of your life feels most neglected right now?', type: 'single', options: [
-    { label: 'My relationships and social life' },
-    { label: 'My health and physical energy' },
-    { label: 'My personal growth and creativity' },
-    { label: 'My inner calm and sense of purpose' },
+  { id: 'needFromBuddy', question: 'What do you need from Unicorn?', type: 'single', options: [
+    { label: 'I just need someone to listen' },
+    { label: 'I want honest advice, even if it\'s hard to hear' },
+    { label: 'Help me understand what I\'m feeling' },
   ]},
-  { id: 'preferExperience', question: 'What do you prefer to experience?', type: 'single', options: [
-    { label: 'Making something with my hands' },
-    { label: 'Learning and expanding my knowledge' },
-    { label: 'Movement and physical challenge' },
-    { label: 'Experiences and meeting new people' },
-  ]},
-  { id: 'nudgeType', question: 'What kind of nudge actually moves you?', type: 'single', options: [
-    { label: 'A quiet reminder' },
-    { label: 'A specific small action I can do in 5 minutes' },
-    { label: 'Challenge me to do something uncomfortable' },
-    { label: 'Push me gently out of my comfort zone' },
-  ]},
-  { id: 'betterLife', question: 'What would a better version of your life feel like?', type: 'single', options: [
-    { label: 'More present with the people I love' },
-    { label: 'More energized and physically alive' },
-    { label: 'More creative and mentally stimulated' },
-    { label: 'More at peace with where I am right now' },
+  { id: 'timeframe', question: 'How long has this been going on?', type: 'single', options: [
+    { label: 'Just happened' },
+    { label: 'A few days' },
+    { label: 'Weeks' },
+    { label: 'A long time: months or more' },
   ]},
 ]
 

@@ -44,6 +44,7 @@ export interface IUser extends Document {
     dodoCustomerId?: string
     dodoSubscriptionId?: string
   }
+  chatMessageCount: number
   wellbeingPlan?: {
     hobby: {
       name: string
@@ -91,6 +92,9 @@ const UserSchema = new Schema<IUser>({
     preferExperience: String,
     nudgeType: String,
     betterLife: String,
+    emotionalState: String,
+    needFromBuddy: String,
+    timeframe: String,
     // legacy fields
     nationality: String,
     relaxationTriggers: [String],
@@ -114,6 +118,7 @@ const UserSchema = new Schema<IUser>({
     dodoCustomerId: String,
     dodoSubscriptionId: String,
   },
+  chatMessageCount: { type: Number, default: 0 },
   wellbeingPlan: {
     hobby: {
       name: String,

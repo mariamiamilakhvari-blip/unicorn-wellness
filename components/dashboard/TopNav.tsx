@@ -1,9 +1,9 @@
 'use client'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { LogOut, User } from 'lucide-react'
+import { LogOut, User, ShieldCheck } from 'lucide-react'
 import { clearUser, getUser } from '@/lib/mock-auth'
-import { signOut as nextAuthSignOut } from 'next-auth/react'
+import { signOut as nextAuthSignOut, useSession } from 'next-auth/react'
 import { useEffect, useState } from 'react'
 import { useLanguage } from '@/lib/i18n/LanguageContext'
 import { LanguageSwitcher } from '@/components/LanguageSwitcher'
@@ -12,8 +12,10 @@ export function TopNav() {
   const pathname = usePathname()
   const router = useRouter()
   const { t } = useLanguage()
+  const { data: session } = useSession()
   const [userName, setUserName] = useState('')
   const [menuOpen, setMenuOpen] = useState(false)
+  const isAdmin = session?.user?.role === 'admin'
 
   const NAV_LINKS = [
     { href: '/home', label: t('topNavHome') },
@@ -63,6 +65,19 @@ export function TopNav() {
                 <User className="h-4 w-4" />
                 {t('topNavProfile')}
               </Link>
+              {isAdmin && (
+                <>
+                  <div className="my-1 border-t border-gray-100" />
+                  <Link
+                    href="/admin"
+                    onClick={() => setMenuOpen(false)}
+                    className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-velvet-700 hover:bg-velvet-50 transition-colors"
+                  >
+                    <ShieldCheck className="h-4 w-4" />
+                    Admin Panel
+                  </Link>
+                </>
+              )}
               <div className="my-1 border-t border-gray-100" />
               <button
                 onClick={signOut}

@@ -1,32 +1,69 @@
 'use client'
-import { useState } from 'react'
-import { Check, Loader2, Crown, Sparkles, Zap } from 'lucide-react'
+import { useEffect, useState, Suspense } from 'react'
+import { useSearchParams } from 'next/navigation'
+import { Loader2, Crown, Sparkles, Zap } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useLanguage } from '@/lib/i18n/LanguageContext'
 
-export default function SubscriptionPage() {
+function SubscriptionContent() {
   const { t } = useLanguage()
+  const searchParams = useSearchParams()
   const [plan, setPlan] = useState<'monthly' | 'yearly'>('yearly')
   const [loading, setLoading] = useState(false)
+  const [remaining, setRemaining] = useState<number | null>(null)
+  const [isPaid, setIsPaid] = useState(false)
 
-  const TRIAL_DAYS = 21
-  const savings = Math.round(((4.99 * 12 - 59.99) / (4.99 * 12)) * 100)
+  // Real free tier is 5 messages with Buddy, not a time-based trial.
+  useEffect(() => {
+    fetch('/api/chat')
+      .then(r => r.json())
+      .then(data => {
+        setRemaining(data.remaining ?? null)
+        setIsPaid(data.isPaid ?? false)
+      })
+      .catch(() => {})
+  }, [])
+
+  // Dodo's webhook can't reach localhost in dev, so confirm payment directly
+  // with the API as a fallback the moment the user lands back here.
+  useEffect(() => {
+    const success = searchParams.get('success')
+    const subscriptionId = searchParams.get('subscription_id')
+    if (success === 'true' && subscriptionId) {
+      fetch('/api/dodo/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ subscriptionId }),
+      })
+        .then(r => r.json())
+        .then(data => {
+          if (data.status === 'active') setIsPaid(true)
+        })
+        .catch(() => {})
+    }
+  }, [searchParams])
+
+  const MONTHLY_PRICE = 12.99
+  const YEARLY_PRICE = 75.89
+  const monthlyEquivalent = (YEARLY_PRICE / 12).toFixed(2)
+  const savingsAmount = (MONTHLY_PRICE * 12 - YEARLY_PRICE).toFixed(2)
+  const savings = Math.round(((MONTHLY_PRICE * 12 - YEARLY_PRICE) / (MONTHLY_PRICE * 12)) * 100)
+  const yearlyNote = t('subYearlyNote').replace('{monthly}', `$${monthlyEquivalent}`).replace('{save}', `$${savingsAmount}`)
 
   const FEATURES = [
-    { icon: '🌀', text: t('subPremiumFeature1') },
-    { icon: '🎯', text: t('subPremiumFeature2') },
-    { icon: '⚡', text: t('subPremiumFeature3') },
-    { icon: '⌚', text: t('subPremiumFeature4') },
-    { icon: '🧠', text: t('subPremiumFeature5') },
-    { icon: '🔔', text: t('subPremiumFeature6') },
-    { icon: '📊', text: t('subPremiumFeature7') },
-    { icon: '🫂', text: t('subPremiumFeature8') },
+    { icon: '💬', text: t('subPremiumFeature1') },
+    { icon: '🧵', text: t('subPremiumFeature2') },
+    { icon: '💞', text: t('subPremiumFeature3') },
   ]
 
   async function subscribe() {
     setLoading(true)
     try {
-      const res = await fetch('/api/dodo/checkout', { method: 'POST' })
+      const res = await fetch('/api/dodo/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ plan }),
+      })
       const data = await res.json()
       if (data.url) {
         window.location.href = data.url
@@ -41,23 +78,31 @@ export default function SubscriptionPage() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="-mx-6 -my-8 px-6 py-8 bg-gradient-to-b from-[#cce6f7] via-[#ddf0fb] to-[#e8f5fd] min-h-[calc(100vh-5rem)] space-y-8">
       {/* Header */}
       <div className="text-center">
         <h1 className="text-3xl font-bold text-gray-900">{t('subTitle')}</h1>
         <p className="text-muted-foreground mt-2">{t('subSubtitle')}</p>
       </div>
 
-      {/* Trial banner */}
-      <div className="bg-gradient-to-r from-ochre-400 to-velvet-600 rounded-2xl p-5 text-white flex items-center gap-4 max-w-2xl mx-auto">
-        <div className="bg-white/20 p-3 rounded-xl shrink-0">
-          <Sparkles className="h-6 w-6" />
+      {/* Free-message status banner */}
+      {remaining !== null && (
+        <div className="bg-white rounded-2xl p-5 text-slate-800 flex items-center gap-4 max-w-2xl mx-auto shadow-sm">
+          <div className="bg-velvet-50 p-3 rounded-xl shrink-0">
+            <Sparkles className="h-6 w-6 text-velvet-500" />
+          </div>
+          <div>
+            {isPaid ? (
+              <p className="font-semibold">{t('subPremiumActiveBadge')}</p>
+            ) : (
+              <>
+                <p className="font-semibold">{remaining} {t('subFreeMessagesLeft')}</p>
+                <p className="text-sm text-slate-600 mt-0.5">{t('subFreeMessagesNote')}</p>
+              </>
+            )}
+          </div>
         </div>
-        <div>
-          <p className="font-semibold">{t('subTrialActive')} — {TRIAL_DAYS} days remaining</p>
-          <p className="text-sm opacity-90 mt-0.5">{t('subTrialNote')}</p>
-        </div>
-      </div>
+      )}
 
       {/* Plan toggle */}
       <div className="flex justify-center">
@@ -80,68 +125,48 @@ export default function SubscriptionPage() {
         </div>
       </div>
 
-      {/* Side-by-side plan cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Free card */}
-        <div className="bg-white rounded-2xl p-8 shadow-sm border border-border">
-          <div className="mb-6">
-            <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">{t('subFreeTrial')}</span>
-            <div className="mt-2">
-              <span className="text-4xl font-black text-gray-900">{t('subFreePrice')}</span>
-              <span className="text-muted-foreground ml-1">{t('subFreeDays')}</span>
-            </div>
-            <p className="text-sm text-muted-foreground mt-1">{t('subFreeNoCard')}</p>
-          </div>
-          <div className="space-y-3 mb-8">
-            {[t('subFreeFeature1'), t('subFreeFeature2'), t('subFreeFeature3'), t('subFreeFeature4')].map(f => (
-              <div key={f} className="flex items-center gap-2.5">
-                <div className="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center shrink-0">
-                  <Check className="h-3 w-3 text-gray-500" />
-                </div>
-                <span className="text-sm text-gray-600">{f}</span>
-              </div>
-            ))}
-          </div>
-          <div className="h-11 flex items-center justify-center rounded-xl border border-border text-sm font-semibold text-muted-foreground bg-gray-50">
-            {t('subCurrentPlan')}
-          </div>
-        </div>
-
-        {/* Premium card */}
-        <div className="bg-gradient-to-br from-velvet-500 to-velvet-700 rounded-2xl p-8 text-white shadow-xl shadow-ochre-100 relative overflow-hidden">
+      {/* Premium card */}
+      <div className="max-w-xl mx-auto">
+        <div className="bg-gradient-to-br from-[#cce6f7] via-[#ddf0fb] to-[#e8f5fd] rounded-2xl p-8 text-slate-800 shadow-xl shadow-sky-100 relative overflow-hidden border border-sky-100">
           <div className="absolute top-4 right-4">
-            <Crown className="h-8 w-8 text-white/30" />
+            <Crown className="h-8 w-8 text-velvet-500/30" />
           </div>
           <div className="mb-6">
-            <span className="text-sm font-semibold text-ochre-100 uppercase tracking-wide">{t('subPremium')}</span>
+            <span className="text-sm font-semibold text-velvet-600 uppercase tracking-wide">{t('subPremium')}</span>
             <div className="mt-2">
-              <span className="text-4xl font-black">
-                {plan === 'yearly' ? '$59.99' : '$4.99'}
+              <span className="text-4xl font-black text-slate-900">
+                {plan === 'yearly' ? `$${YEARLY_PRICE}` : `$${MONTHLY_PRICE}`}
               </span>
-              <span className="text-ochre-100 ml-1">/ {plan === 'yearly' ? t('subYear') : t('subMonth')}</span>
+              <span className="text-slate-500 ml-1">/ {plan === 'yearly' ? t('subYear') : t('subMonth')}</span>
             </div>
             {plan === 'yearly'
-              ? <p className="text-sage-300 text-sm font-semibold mt-1">{t('subYearlyNote')} ${(4.99 * 12 - 59.99).toFixed(2)}</p>
-              : <p className="text-ochre-100 text-sm mt-1">{t('subMonthlyNote')}</p>}
+              ? <p className="text-sage-600 text-sm font-semibold mt-1">{yearlyNote}</p>
+              : <p className="text-slate-500 text-sm mt-1">{t('subMonthlyNote')}</p>}
           </div>
 
-          <div className="grid grid-cols-2 gap-2.5 mb-8">
+          <div className="space-y-3 mb-8">
             {FEATURES.map(f => (
-              <div key={f.text} className="flex items-center gap-2">
-                <span className="text-sm shrink-0">{f.icon}</span>
-                <span className="text-xs text-ochre-100 leading-tight">{f.text}</span>
+              <div key={f.text} className="flex items-center gap-2.5">
+                <span className="text-base shrink-0">{f.icon}</span>
+                <span className="text-sm text-slate-600 leading-tight">{f.text}</span>
               </div>
             ))}
           </div>
 
-          <Button
-            onClick={subscribe}
-            disabled={loading}
-            className="w-full h-12 bg-white text-velvet-600 hover:bg-ochre-50 font-bold rounded-xl text-base shadow-lg"
-          >
-            {loading ? <Loader2 className="h-5 w-5 animate-spin mr-2" /> : <Zap className="h-5 w-5 mr-2" />}
-            {t('subStartAfterTrial')} · {plan === 'yearly' ? '$59.99/yr' : '$4.99/mo'}
-          </Button>
+          {isPaid ? (
+            <div className="w-full h-12 flex items-center justify-center rounded-xl bg-white/60 text-velvet-600 font-bold text-base">
+              {t('subCurrentPlan')}
+            </div>
+          ) : (
+            <Button
+              onClick={subscribe}
+              disabled={loading}
+              className="w-full h-12 bg-velvet-500 text-white hover:bg-velvet-600 font-bold rounded-xl text-base shadow-lg"
+            >
+              {loading ? <Loader2 className="h-5 w-5 animate-spin mr-2" /> : <Zap className="h-5 w-5 mr-2" />}
+              {t('subStartAfterTrial')} · {plan === 'yearly' ? `$${YEARLY_PRICE}/yr` : `$${MONTHLY_PRICE}/mo`}
+            </Button>
+          )}
         </div>
       </div>
 
@@ -149,5 +174,13 @@ export default function SubscriptionPage() {
         {t('subSecure')}
       </p>
     </div>
+  )
+}
+
+export default function SubscriptionPage() {
+  return (
+    <Suspense>
+      <SubscriptionContent />
+    </Suspense>
   )
 }

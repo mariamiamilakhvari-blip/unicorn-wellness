@@ -71,18 +71,17 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       }
       return true
     },
-    async jwt({ token, user, trigger }) {
+    async jwt({ token, user }) {
       if (user) {
         token.id = user.id ?? ''
         token.onboardingCompleted = user.onboardingCompleted ?? false
         token.role = user.role ?? 'user'
-      }
-      if (trigger === 'update') {
+      } else if (token.id) {
         await connectDB()
-        const dbUser = await User.findById(token.id)
+        const dbUser = await User.findById(token.id).select('role onboardingCompleted').lean() as { role?: 'user' | 'admin'; onboardingCompleted?: boolean } | null
         if (dbUser) {
-          token.onboardingCompleted = dbUser.onboardingCompleted
           token.role = dbUser.role ?? 'user'
+          token.onboardingCompleted = dbUser.onboardingCompleted ?? false
         }
       }
       return token

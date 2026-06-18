@@ -1,265 +1,243 @@
 'use client'
+
 import { useEffect, useState } from 'react'
-import Image from 'next/image'
-import { Trash2, Pencil, Check, X, Users, ImageIcon, ShieldCheck } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { Users, TrendingUp, CreditCard, Activity, Target, BookOpen } from 'lucide-react'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+  ChartLegend,
+  ChartLegendContent,
+  type ChartConfig,
+} from '@/components/ui/chart'
+import {
+  Area,
+  AreaChart,
+  Bar,
+  BarChart,
+  Pie,
+  PieChart,
+  Cell,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+} from 'recharts'
+import { Skeleton } from '@/components/ui/skeleton'
 
-type User = {
-  _id: string
-  name: string
-  email: string
-  role: 'user' | 'admin'
-  provider: string
-  onboardingCompleted: boolean
-  subscription?: { plan: string; status: string }
-  createdAt: string
-  image?: string
+type Stats = {
+  totals: { users: number; newThisMonth: number; activeSubscriptions: number; challenges: number; hobbies: number }
+  subscriptions: { free_trial: number; monthly: number; yearly: number }
+  signupsByDay: { date: string; users: number }[]
+  subscriptionBreakdown: { plan: string; count: number }[]
+  onboarding: { completed: number; pending: number }
 }
 
-type Upload = {
-  public_id: string
-  secure_url: string
-  created_at: string
-  bytes: number
-  width: number
-  height: number
+const signupChartConfig: ChartConfig = {
+  users: { label: 'New Users', color: '#73306b' },
 }
 
-type EditingUser = { name: string; email: string; role: 'user' | 'admin' }
+const subChartConfig: ChartConfig = {
+  free_trial: { label: 'Free Trial', color: '#b876ab' },
+  monthly: { label: 'Monthly', color: '#73306b' },
+  yearly: { label: 'Yearly', color: '#3f0e3b' },
+}
 
-export default function AdminPage() {
-  const [tab, setTab] = useState<'users' | 'uploads'>('users')
-  const [users, setUsers] = useState<User[]>([])
-  const [uploads, setUploads] = useState<Upload[]>([])
-  const [loading, setLoading] = useState(false)
-  const [editingId, setEditingId] = useState<string | null>(null)
-  const [editForm, setEditForm] = useState<EditingUser>({ name: '', email: '', role: 'user' })
-  const [saving, setSaving] = useState(false)
+const PIE_COLORS = ['#b876ab', '#73306b', '#3f0e3b', '#96508c', '#561a50']
+
+const onboardingConfig: ChartConfig = {
+  completed: { label: 'Completed', color: '#22c55e' },
+  pending: { label: 'Pending', color: '#73306b' },
+}
+
+function StatCard({ label, value, icon: Icon, sub }: { label: string; value: string | number; icon: React.ComponentType<{ className?: string }>; sub?: string }) {
+  return (
+    <Card className="bg-gray-900 border-gray-800">
+      <CardContent className="p-5">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">{label}</p>
+            <p className="text-3xl font-bold text-white mt-1">{value}</p>
+            {sub && <p className="text-xs text-gray-500 mt-1">{sub}</p>}
+          </div>
+          <div className="w-12 h-12 rounded-xl bg-velvet-600/20 flex items-center justify-center">
+            <Icon className="h-5 w-5 text-velvet-400" />
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+export default function AdminDashboard() {
+  const [stats, setStats] = useState<Stats | null>(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (tab === 'users') loadUsers()
-    else loadUploads()
-  }, [tab])
+    fetch('/api/admin/stats')
+      .then(r => r.json())
+      .then(d => { setStats(d); setLoading(false) })
+      .catch(() => setLoading(false))
+  }, [])
 
-  async function loadUsers() {
-    setLoading(true)
-    const res = await fetch('/api/admin/users')
-    const data = await res.json()
-    setUsers(data.users ?? [])
-    setLoading(false)
+  if (loading) {
+    return (
+      <div className="p-8 space-y-6">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-28 bg-gray-800 rounded-xl" />)}
+        </div>
+        <Skeleton className="h-72 bg-gray-800 rounded-xl" />
+      </div>
+    )
   }
 
-  async function loadUploads() {
-    setLoading(true)
-    const res = await fetch('/api/admin/uploads')
-    const data = await res.json()
-    setUploads(data.resources ?? [])
-    setLoading(false)
+  if (!stats) {
+    return (
+      <div className="p-8 flex items-center justify-center">
+        <p className="text-gray-500">Failed to load stats. Make sure you are signed in as admin.</p>
+      </div>
+    )
   }
 
-  function startEdit(user: User) {
-    setEditingId(user._id)
-    setEditForm({ name: user.name, email: user.email, role: user.role })
-  }
+  const subBarData = [
+    { plan: 'Free Trial', count: stats.subscriptions.free_trial },
+    { plan: 'Monthly', count: stats.subscriptions.monthly },
+    { plan: 'Yearly', count: stats.subscriptions.yearly },
+  ]
 
-  async function saveUser() {
-    if (!editingId) return
-    setSaving(true)
-    const res = await fetch('/api/admin/users', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: editingId, ...editForm }),
-    })
-    const data = await res.json()
-    if (data.user) {
-      setUsers(prev => prev.map(u => u._id === editingId ? { ...u, ...data.user } : u))
-    }
-    setEditingId(null)
-    setSaving(false)
-  }
+  const onboardingData = [
+    { name: 'completed', value: stats.onboarding.completed, fill: '#22c55e' },
+    { name: 'pending', value: stats.onboarding.pending, fill: '#73306b' },
+  ]
 
-  async function deleteUser(id: string) {
-    if (!confirm('Delete this user? This cannot be undone.')) return
-    await fetch('/api/admin/users', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) })
-    setUsers(prev => prev.filter(u => u._id !== id))
-  }
-
-  async function deleteUpload(publicId: string) {
-    if (!confirm('Delete this image from Cloudinary?')) return
-    await fetch('/api/admin/uploads', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ publicId }) })
-    setUploads(prev => prev.filter(u => u.public_id !== publicId))
-  }
+  const formattedDays = stats.signupsByDay.map(d => ({
+    ...d,
+    date: new Date(d.date).toLocaleDateString('en', { month: 'short', day: 'numeric' }),
+  }))
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="p-8 space-y-6">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-6 py-4 flex items-center gap-3">
-        <div className="w-8 h-8 rounded-lg bg-velvet-500 flex items-center justify-center">
-          <ShieldCheck className="h-4 w-4 text-white" />
-        </div>
-        <h1 className="text-xl font-bold text-gray-900">Admin Dashboard</h1>
+      <div>
+        <h1 className="text-2xl font-bold text-white">Dashboard</h1>
+        <p className="text-gray-500 text-sm mt-1">Platform overview and analytics</p>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 py-8">
-        {/* Tabs */}
-        <div className="flex gap-1 bg-gray-100 p-1 rounded-xl w-fit mb-8">
-          <button
-            onClick={() => setTab('users')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${tab === 'users' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
-          >
-            <Users className="h-4 w-4" />
-            Users
-            {users.length > 0 && <span className="bg-velvet-100 text-velvet-700 text-xs px-1.5 py-0.5 rounded-full">{users.length}</span>}
-          </button>
-          <button
-            onClick={() => setTab('uploads')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${tab === 'uploads' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
-          >
-            <ImageIcon className="h-4 w-4" />
-            Uploads
-            {uploads.length > 0 && <span className="bg-velvet-100 text-velvet-700 text-xs px-1.5 py-0.5 rounded-full">{uploads.length}</span>}
-          </button>
-        </div>
+      {/* Stat cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+        <StatCard label="Total Users" value={stats.totals.users} icon={Users} />
+        <StatCard label="New This Month" value={stats.totals.newThisMonth} icon={TrendingUp} sub="+last 30 days" />
+        <StatCard label="Active Subs" value={stats.totals.activeSubscriptions} icon={CreditCard} />
+        <StatCard label="Challenges" value={stats.totals.challenges} icon={Target} />
+        <StatCard label="Hobbies" value={stats.totals.hobbies} icon={BookOpen} />
+      </div>
 
-        {loading && (
-          <div className="flex items-center justify-center py-20">
-            <div className="w-8 h-8 border-2 border-velvet-500 border-t-transparent rounded-full animate-spin" />
-          </div>
-        )}
+      {/* Charts row 1 */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        {/* Signups area chart */}
+        <Card className="lg:col-span-2 bg-gray-900 border-gray-800">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-white text-base">New Signups (30 days)</CardTitle>
+            <CardDescription className="text-gray-500">Daily user registrations</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ChartContainer config={signupChartConfig} className="h-52 w-full">
+              <AreaChart data={formattedDays}>
+                <defs>
+                  <linearGradient id="fillUsers" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#73306b" stopOpacity={0.4} />
+                    <stop offset="95%" stopColor="#73306b" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                <XAxis dataKey="date" tick={{ fill: '#6b7280', fontSize: 10 }} tickLine={false} axisLine={false} interval={4} />
+                <YAxis tick={{ fill: '#6b7280', fontSize: 10 }} tickLine={false} axisLine={false} />
+                <ChartTooltip content={<ChartTooltipContent />} />
+                <Area type="monotone" dataKey="users" stroke="#73306b" fill="url(#fillUsers)" strokeWidth={2} dot={false} />
+              </AreaChart>
+            </ChartContainer>
+          </CardContent>
+        </Card>
 
-        {/* Users Table */}
-        {!loading && tab === 'users' && (
-          <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-gray-100 bg-gray-50">
-                    <th className="text-left px-4 py-3 font-semibold text-gray-600">User</th>
-                    <th className="text-left px-4 py-3 font-semibold text-gray-600">Role</th>
-                    <th className="text-left px-4 py-3 font-semibold text-gray-600">Provider</th>
-                    <th className="text-left px-4 py-3 font-semibold text-gray-600">Plan</th>
-                    <th className="text-left px-4 py-3 font-semibold text-gray-600">Joined</th>
-                    <th className="text-right px-4 py-3 font-semibold text-gray-600">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {users.map(user => (
-                    <tr key={user._id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
-                      <td className="px-4 py-3">
-                        {editingId === user._id ? (
-                          <div className="flex flex-col gap-1.5">
-                            <input
-                              className="border border-gray-200 rounded-lg px-2.5 py-1.5 text-sm w-44 focus:outline-none focus:ring-2 focus:ring-velvet-300"
-                              value={editForm.name}
-                              onChange={e => setEditForm(f => ({ ...f, name: e.target.value }))}
-                              placeholder="Name"
-                            />
-                            <input
-                              className="border border-gray-200 rounded-lg px-2.5 py-1.5 text-sm w-44 focus:outline-none focus:ring-2 focus:ring-velvet-300"
-                              value={editForm.email}
-                              onChange={e => setEditForm(f => ({ ...f, email: e.target.value }))}
-                              placeholder="Email"
-                            />
-                          </div>
-                        ) : (
-                          <div className="flex items-center gap-3">
-                            {user.image ? (
-                              <Image src={user.image} alt={user.name} width={32} height={32} className="rounded-full object-cover" />
-                            ) : (
-                              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-velvet-300 to-velvet-500 flex items-center justify-center text-white text-xs font-bold">
-                                {user.name?.[0]?.toUpperCase()}
-                              </div>
-                            )}
-                            <div>
-                              <div className="font-medium text-gray-900">{user.name}</div>
-                              <div className="text-gray-400 text-xs">{user.email}</div>
-                            </div>
-                          </div>
-                        )}
-                      </td>
-                      <td className="px-4 py-3">
-                        {editingId === user._id ? (
-                          <select
-                            className="border border-gray-200 rounded-lg px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-velvet-300"
-                            value={editForm.role}
-                            onChange={e => setEditForm(f => ({ ...f, role: e.target.value as 'user' | 'admin' }))}
-                          >
-                            <option value="user">user</option>
-                            <option value="admin">admin</option>
-                          </select>
-                        ) : (
-                          <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${user.role === 'admin' ? 'bg-velvet-100 text-velvet-700' : 'bg-gray-100 text-gray-500'}`}>
-                            {user.role ?? 'user'}
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-4 py-3 text-gray-500 capitalize">{user.provider}</td>
-                      <td className="px-4 py-3">
-                        <span className="text-xs text-gray-500">{user.subscription?.plan ?? '—'}</span>
-                      </td>
-                      <td className="px-4 py-3 text-gray-500 text-xs">{new Date(user.createdAt).toLocaleDateString()}</td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center justify-end gap-1">
-                          {editingId === user._id ? (
-                            <>
-                              <button onClick={saveUser} disabled={saving} className="p-1.5 rounded-lg hover:bg-sage-50 text-sage-600 transition-colors">
-                                <Check className="h-4 w-4" />
-                              </button>
-                              <button onClick={() => setEditingId(null)} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 transition-colors">
-                                <X className="h-4 w-4" />
-                              </button>
-                            </>
-                          ) : (
-                            <>
-                              <button onClick={() => startEdit(user)} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition-colors">
-                                <Pencil className="h-4 w-4" />
-                              </button>
-                              <button onClick={() => deleteUser(user._id)} className="p-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-600 transition-colors">
-                                <Trash2 className="h-4 w-4" />
-                              </button>
-                            </>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                  {users.length === 0 && (
-                    <tr><td colSpan={6} className="px-4 py-12 text-center text-gray-400">No users found</td></tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-
-        {/* Uploads Grid */}
-        {!loading && tab === 'uploads' && (
-          <div>
-            {uploads.length === 0 ? (
-              <div className="text-center py-20 text-gray-400">No uploads found in unicorn-avatars folder</div>
-            ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                {uploads.map(upload => (
-                  <div key={upload.public_id} className="group relative bg-white rounded-xl border border-gray-200 overflow-hidden">
-                    <div className="relative aspect-square">
-                      <Image src={upload.secure_url} alt={upload.public_id} fill className="object-cover" />
-                      <button
-                        onClick={() => deleteUpload(upload.public_id)}
-                        className="absolute top-1.5 right-1.5 w-7 h-7 bg-red-500 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
-                    </div>
-                    <div className="px-2 py-1.5">
-                      <p className="text-xs text-gray-400 truncate">{upload.public_id.split('/').pop()}</p>
-                      <p className="text-xs text-gray-300">{(upload.bytes / 1024).toFixed(0)}KB · {upload.width}×{upload.height}</p>
-                    </div>
-                  </div>
-                ))}
+        {/* Onboarding pie */}
+        <Card className="bg-gray-900 border-gray-800">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-white text-base">Onboarding</CardTitle>
+            <CardDescription className="text-gray-500">Completion rate</CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-col items-center">
+            <ChartContainer config={onboardingConfig} className="h-44 w-full">
+              <PieChart>
+                <Pie data={onboardingData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={50} outerRadius={75} paddingAngle={3}>
+                  {onboardingData.map((entry, i) => <Cell key={i} fill={entry.fill} />)}
+                </Pie>
+                <ChartTooltip content={<ChartTooltipContent />} />
+              </PieChart>
+            </ChartContainer>
+            <div className="flex gap-4 mt-2">
+              <div className="flex items-center gap-1.5 text-xs text-gray-400">
+                <div className="w-2 h-2 rounded-full bg-green-500" />
+                Completed ({stats.onboarding.completed})
               </div>
-            )}
-          </div>
-        )}
+              <div className="flex items-center gap-1.5 text-xs text-gray-400">
+                <div className="w-2 h-2 rounded-full bg-velvet-500" />
+                Pending ({stats.onboarding.pending})
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Charts row 2 */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Subscription bar chart */}
+        <Card className="bg-gray-900 border-gray-800">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-white text-base">Subscription Plans</CardTitle>
+            <CardDescription className="text-gray-500">Users per plan</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ChartContainer config={subChartConfig} className="h-52 w-full">
+              <BarChart data={subBarData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#374151" vertical={false} />
+                <XAxis dataKey="plan" tick={{ fill: '#6b7280', fontSize: 11 }} tickLine={false} axisLine={false} />
+                <YAxis tick={{ fill: '#6b7280', fontSize: 11 }} tickLine={false} axisLine={false} />
+                <ChartTooltip content={<ChartTooltipContent />} />
+                <Bar dataKey="count" radius={[6, 6, 0, 0]}>
+                  {subBarData.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
+                </Bar>
+              </BarChart>
+            </ChartContainer>
+          </CardContent>
+        </Card>
+
+        {/* Subscription breakdown pie */}
+        <Card className="bg-gray-900 border-gray-800">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-white text-base">Plan Distribution</CardTitle>
+            <CardDescription className="text-gray-500">All plan types</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ChartContainer config={subChartConfig} className="h-52 w-full">
+              <PieChart>
+                <Pie
+                  data={stats.subscriptionBreakdown}
+                  dataKey="count"
+                  nameKey="plan"
+                  cx="50%"
+                  cy="50%"
+                  outerRadius={90}
+                  paddingAngle={2}
+                  label={({ plan, percent }) => `${plan} ${(percent * 100).toFixed(0)}%`}
+                  labelLine={false}
+                >
+                  {stats.subscriptionBreakdown.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
+                </Pie>
+                <ChartTooltip content={<ChartTooltipContent />} />
+              </PieChart>
+            </ChartContainer>
+          </CardContent>
+        </Card>
       </div>
     </div>
   )

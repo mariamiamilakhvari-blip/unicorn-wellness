@@ -9,21 +9,29 @@ const dodo = new DodoPayments({
   environment: 'test_mode',
 })
 
-export async function POST() {
+export async function POST(req: Request) {
   const session = await auth()
   if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   try {
+    const { plan }: { plan?: 'monthly' | 'yearly' } = await req.json().catch(() => ({}))
+
+    const productId = plan === 'monthly'
+      ? process.env.DODO_MONTHLY_PRODUCT_ID || process.env.DODO_PREMIUM_PRODUCT_ID!
+      : plan === 'yearly'
+        ? process.env.DODO_YEARLY_PRODUCT_ID || process.env.DODO_PREMIUM_PRODUCT_ID!
+        : process.env.DODO_PREMIUM_PRODUCT_ID!
+
     await connectDB()
     const user = await User.findById(session.user.id)
     if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 })
 
     const checkout = await dodo.checkoutSessions.create({
-      product_cart: [{ product_id: process.env.DODO_PREMIUM_PRODUCT_ID!, quantity: 1 }],
+      product_cart: [{ product_id: productId, quantity: 1 }],
       customer: { email: user.email },
       return_url: `${process.env.NEXT_PUBLIC_APP_URL}/subscription?success=true`,
       cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/subscription`,
-      metadata: { userId: String(session.user.id) },
+      metadata: { userId: String(session.user.id), plan: plan ?? 'premium' },
       customization: {
         theme: 'light',
         theme_config: {
