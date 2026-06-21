@@ -40,6 +40,24 @@ export default function HomePage() {
       .finally(() => setInitialising(false))
   }, [status, router])
 
+  // Restore persisted chat history when session is ready
+  useEffect(() => {
+    if (!session?.user?.id) return
+    try {
+      const stored = localStorage.getItem(`unicorn_chat_${session.user.id}`)
+      if (stored) {
+        const parsed: Message[] = JSON.parse(stored)
+        if (Array.isArray(parsed) && parsed.length > 1) setMessages(parsed)
+      }
+    } catch {}
+  }, [session?.user?.id])
+
+  // Persist chat history on every change
+  useEffect(() => {
+    if (!session?.user?.id || messages.length <= 1) return
+    localStorage.setItem(`unicorn_chat_${session.user.id}`, JSON.stringify(messages))
+  }, [messages, session?.user?.id])
+
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, loading])

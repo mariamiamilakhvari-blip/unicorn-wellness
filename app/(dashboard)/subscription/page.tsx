@@ -1,12 +1,13 @@
 'use client'
 import { useEffect, useState, Suspense } from 'react'
-import { useSearchParams } from 'next/navigation'
-import { Loader2, Crown, Sparkles, Zap } from 'lucide-react'
+import { useSearchParams, useRouter } from 'next/navigation'
+import { Loader2, Crown, Sparkles, Zap, ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useLanguage } from '@/lib/i18n/LanguageContext'
 
 function SubscriptionContent() {
   const { t } = useLanguage()
+  const router = useRouter()
   const searchParams = useSearchParams()
   const [plan, setPlan] = useState<'monthly' | 'yearly'>('yearly')
   const [loading, setLoading] = useState(false)
@@ -47,7 +48,7 @@ function SubscriptionContent() {
   const YEARLY_PRICE = 75.89
   const monthlyEquivalent = (YEARLY_PRICE / 12).toFixed(2)
   const savingsAmount = (MONTHLY_PRICE * 12 - YEARLY_PRICE).toFixed(2)
-  const savings = Math.round(((MONTHLY_PRICE * 12 - YEARLY_PRICE) / (MONTHLY_PRICE * 12)) * 100)
+  const savings = 49
   const yearlyNote = t('subYearlyNote').replace('{monthly}', `$${monthlyEquivalent}`).replace('{save}', `$${savingsAmount}`)
 
   const FEATURES = [
@@ -79,6 +80,17 @@ function SubscriptionContent() {
 
   return (
     <div className="-mx-6 -my-8 px-6 py-8 bg-gradient-to-b from-[#cce6f7] via-[#ddf0fb] to-[#e8f5fd] min-h-[calc(100vh-5rem)] space-y-8">
+      {/* Back button */}
+      <div>
+        <button
+          onClick={() => router.push('/home')}
+          className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-800 transition-colors"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back to chat
+        </button>
+      </div>
+
       {/* Header */}
       <div className="text-center">
         <h1 className="text-3xl font-bold text-gray-900">{t('subTitle')}</h1>
