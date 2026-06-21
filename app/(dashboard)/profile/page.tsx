@@ -105,7 +105,6 @@ export default function ProfilePage() {
             <div>
               <p className="text-xl font-bold text-gray-900">{session?.user?.name}</p>
               <p className="text-sm text-muted-foreground">{session?.user?.email}</p>
-              <p className="text-xs text-sage-600 font-semibold mt-1">{t('profileFreeTrial')}</p>
             </div>
           </div>
         </div>
